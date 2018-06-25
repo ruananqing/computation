@@ -28,10 +28,16 @@ Array.prototype.any = function () {
     }
 }
 
-// let a = [1, 2, [3, 4], [[[[[5], 666], 6], 7], [8, 9]], 10];
-// console.log(a);
-// console.log(a.flat())
+Array.prototype.isSubSetOf = function (arr) {
+    let bool = true;
+    this.forEach(ele => {
+        if (!arr.includes(ele)) {
+            bool = false;
+        }
+    });
 
+    return bool;
+}
 
 // some useful method-----------------end
 
@@ -45,7 +51,7 @@ class FARule {
         this.to_s = () => `#<FRule ${this.state} --${this.character}--> ${this.next_state}>`
     }
 
-    // be used for mapping the rule(instance) by inputting a state and a character
+    // be used for matching the rule(instance) by inputting a state and a character
     applies_to(state, character) {
         return this.state == state && this.character == character;
     }
@@ -65,19 +71,11 @@ class DFARulebook {
         return this.rule_for(state, character).follow();
     }
 
-    // to map(or find) the rule by the inputed state and character
+    // to match(or find) the rule by the inputed state and character
     rule_for(state, character) {
         return this.rules.find(rule => rule.applies_to(state, character));
     }
 }
-
-// let rulebook = new DFARulebook([
-//     new FARule(1, 'a', 2), new FARule(1, 'b', 1),
-//     new FARule(2, 'a', 2), new FARule(2, 'b', 3),
-//     new FARule(3, 'a', 3), new FARule(3, 'b', 3)
-// ])
-
-// console.log(rulebook.next_state(3, 'b'));
 
 class DFA {
     constructor(current_state, accept_states, rulebook) {
@@ -120,10 +118,6 @@ class DFADesign {
     }
 }
 
-// let dfa_design = new DFADesign(1, [3], rulebook);
-// dfa_design.accepts('aab');
-// console.log(dfa_design.accepts('aab'));
-
 class NFARulebook {
     constructor(rules) {
         this.rules = rules;
@@ -141,15 +135,17 @@ class NFARulebook {
     rules_for(state, character) {
         return this.rules.filter(rule => rule.applies_to(state, character));
     }
+
+    follow_free_moves(states) {
+        let more_states = this.next_states(states, null);
+
+        if (more_states.isSubSetOf(states)) {
+            return states;
+        } else {
+            return this.follow_free_moves([...states, ...more_states]);
+        }
+    }
 }
-
-let rulebook = new NFARulebook([
-    new FARule(1, 'a', 1), new FARule(1, 'b', 1), new FARule(1, 'b', 2),
-    new FARule(2, 'a', 3), new FARule(2, 'b', 3),
-    new FARule(3, 'a', 4), new FARule(3, 'b', 4)
-]);
-
-// console.log(rulebook.next_states([1], 'b'))
 
 class NFA {
     constructor(current_states, accept_states, rulebook) {
@@ -159,7 +155,6 @@ class NFA {
     }
 
     accepting() {
-        // console.log(this.accept_states)
         let intersection = this.current_states.filter(ele => this.accept_states.includes(ele));
         return intersection.any();
     }
@@ -172,10 +167,6 @@ class NFA {
         string.split("").forEach(char => this.read_character(char));
     }
 }
-
-// let nfa = new NFA([1], [4], rulebook);
-// nfa.read_string('bbb')
-// console.log(nfa.accepting());
 
 class NFADesign {
     constructor(start_state, accept_states, rulebook) {
@@ -196,5 +187,13 @@ class NFADesign {
     }
 }
 
-let nfa_design = new NFADesign([1], [4], rulebook);
-console.log(nfa_design.accepts('bbabb'));
+let rulebook = new NFARulebook([
+    new FARule(1, null, 2), new FARule(1, null, 4),
+    new FARule(2, 'a', 3),
+    new FARule(3, 'a', 2),
+    new FARule(4, 'a', 5),
+    new FARule(5, 'a', 6),
+    new FARule(6, 'a', 4)
+]);
+
+console.log(rulebook.follow_free_moves([1]))
