@@ -43,7 +43,7 @@ Array.prototype.isSubSetOf = function (arr) {
 
 
 
-class FARule {
+export class FARule {
     constructor(state, character, next_state) {
         this.state = state;
         this.character = character;
@@ -62,7 +62,7 @@ class FARule {
 
 }
 
-class DFARulebook {
+export class DFARulebook {
     constructor(rules) {
         this.rules = rules;
     }
@@ -77,7 +77,7 @@ class DFARulebook {
     }
 }
 
-class DFA {
+export class DFA {
     constructor(current_state, accept_states, rulebook) {
         this.current_state = current_state;
         this.accept_states = accept_states;
@@ -98,7 +98,7 @@ class DFA {
     }
 }
 
-class DFADesign {
+export class DFADesign {
     constructor(start_state, accept_states, rulebook) {
         this.start_state = start_state;
         this.accpet_states = accept_states;
@@ -113,12 +113,11 @@ class DFADesign {
         let dfa = this.to_dfa();
         dfa.read_string(string);
         return dfa.accepting();
-
         // return this.to_dfa().read_string(string).accepting();
     }
 }
 
-class NFARulebook {
+export class NFARulebook {
     constructor(rules) {
         this.rules = rules;
     }
@@ -147,20 +146,24 @@ class NFARulebook {
     }
 }
 
-class NFA {
+export class NFA {
+    //accept_states should be an array
     constructor(current_states, accept_states, rulebook) {
-        this.current_states = current_states;
+        this.current_states = Array.from(new Set(rulebook.follow_free_moves(current_states)));
         this.accept_states = accept_states;
         this.rulebook = rulebook;
     }
 
     accepting() {
+        //accept_states should be an array
         let intersection = this.current_states.filter(ele => this.accept_states.includes(ele));
         return intersection.any();
     }
 
     read_character(character) {
         this.current_states = this.rulebook.next_states(this.current_states, character);
+        // to ensure that the nfa's current_state should makes once follow_free_moves after reading a character
+        this.current_states = Array.from(new Set(this.rulebook.follow_free_moves(this.current_states)));
     }
 
     read_string(string) {
@@ -168,7 +171,8 @@ class NFA {
     }
 }
 
-class NFADesign {
+export class NFADesign {
+    //accept_states should be an array
     constructor(start_state, accept_states, rulebook) {
         this.start_state = start_state;
         this.accept_states = accept_states;
@@ -182,18 +186,6 @@ class NFADesign {
     }
 
     to_nfa() {
-        // return new NFA(Array.from(new Set(this.start_state)), this.accept_states, this.rulebook);
-        return new NFA(Array.from(this.start_state), this.accept_states, this.rulebook);
+        return new NFA([this.start_state], this.accept_states, this.rulebook);
     }
 }
-
-let rulebook = new NFARulebook([
-    new FARule(1, null, 2), new FARule(1, null, 4),
-    new FARule(2, 'a', 3),
-    new FARule(3, 'a', 2),
-    new FARule(4, 'a', 5),
-    new FARule(5, 'a', 6),
-    new FARule(6, 'a', 4)
-]);
-
-console.log(rulebook.follow_free_moves([1]))
